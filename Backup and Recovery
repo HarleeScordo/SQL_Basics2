@@ -1,0 +1,165 @@
+## Multiplexing Control Files using init.ora
+
+SHUTDOWN NORMAL
+
+CONTROL_FILES = ('C: \app\DBAdmin\oradata\orcl\CONTROL01.CTL', 
+'C: \app\DBAdmin\oradata\orcl\CONTROL02.CTL')
+
+CONTROL_FILES = ('C: \app\DBAdmin\oradata\orcl\CONTROL01.CTL', 
+'C: \app\DBAdmin\oradata\orcl\CONTROL02.CTL', 
+'C: \app\DBAdmin\controlfiles\CONTROL03.CTL', 
+'C: \app\DBAdmin\controlfiles\CONTROL04.CTL')
+
+\CONTROL04.CTL')
+
+Startup pfile= C:\app\DBAdmin\admin\orcl\pfile\initORCL.ora
+
+Show parameter control_files;
+
+
+
+## Using spfile
+
+STARTUP NOMOUNT
+
+Show parameter spfile;
+
+ALTER SYSTEM SET CONTROL_FILES = 'C:\app\DBAdmin\oradata\orcl\CONTROL01.CTL' ,
+'C:\app\DBAdmin\oradata\orcl\CONTROL02.CTL',
+'C:\app\DBAdmin\oradata\orcl\CONTROL05.CTL',
+'C:\app\DBAdmin\oradata\orcl\CONTROL06.CTL' SCOPE=SPFILE;
+
+SHUTDOWN NORMAL
+
+STARTUP
+
+
+
+## Creating New Groups 
+
+ALTER DATABASE ADD LOGFILE
+GROUP 4 ('C:\app\redolog\redo0401.log',                          
+'C:\app\redolog\redo0402.log') SIZE 100M;
+
+ALTER DATABASE ADD LOGFILE
+('C: \app\redolog\redo0501.log',                                  
+'C: \app\redolog\redo0502.log') SIZE 100M;
+
+ALTER DATABASE ADD LOGFILE
+'C: \app\redolog\redo0503.log' SIZE 10M;
+
+
+## Adding new Members 
+
+ALTER DATABASE ADD LOGFILE MEMBER
+'C: \app\redolog\redo0504.log' TO GROUP 2;
+
+ALTER DATABASE ADD LOGFILE MEMBER
+'C: \app\redolog\redo0403.log' TO
+('C: \app\redolog\redo0401.log',                                  
+'C: \app\redolog\redo0402.log');
+
+
+## Dropping redo log Memebers
+
+ALTER DATABASE DROP LOGFILE MEMBER
+'C: \app\redolog\redo0504.log';
+
+
+## Dropping redo Log Groups
+
+ALTER DATABASE DROP LOGFILE GROUP 4;
+
+
+
+## Clearing online redo log files
+
+ALTER DATABASE CLEAR LOGFILE GROUP 7;
+
+
+
+## Setting the archived destination 
+
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_1='LOCATION= C:\dest MANDATORY';
+
+
+
+## Setting ARCHIVEDLOG
+
+SHUTDOWN IMMEDIATE;
+
+STARTUP MOUNT;
+
+ALTER database archivelog;
+
+ALTER database open;
+
+ARCHIVE log list;
+
+SELECT dbid, name, created, log_mode FROM v$database;
+
+
+
+## Fast recovery area using SQL
+
+ALTER SYSTEM SET db_recovery_file_dest_size = 80g SCOPE=both;
+
+ALTER SYSTEM SET db_recovery_file_dest = 'C: \app\recovery' SCOPE=both;
+
+
+
+## Fast Recovery area Occupants 
+
+SELECT file_type, percent_space_used psu,
+percent_space_reclaimable psr, number_of_files nf
+FROM v$recovery_area_usage;
+
+
+
+## Text Backup of Control File
+
+Alter database backup controlfile to trace;
+
+Alter database backup controlfile to trace as 'C:\ app\mycontrol.txt';
+
+
+## Binary Backup control file
+
+Alter database backup controlfile to 'C: \app\backup\bbackup.bkp';
+
+
+## Performing user-managed hot backups
+
+Shutdown immediate;
+Startup mount;
+Alter database archivelog;
+Alter database open;
+
+Alter tablespace users BEGIN BACKUP;
+
+Alter tablespace users END BACKUP;
+
+Alter database BEGIN BACKUP;
+
+
+
+## Full and incremental backups
+
+SHUTDOWN IMMEDIATE;
+STARTUP MOUNT;
+ALTER DATABASE ARCHIVELOG;
+ALTER DATABASE OPEN;
+
+SELECT name, open_mode, log_mode FROM v$database;
+
+rman target /
+
+RMAN> backup incremental level 0
+as compressed backupset database;
+
+RMAN> backup incremental level 1
+as compressed backupset database;
+
+
+
+
