@@ -232,3 +232,69 @@ WHERE table_name LIKE 'DBA%CHAIN%' OR table_name LIKE 'V$CHAIN%';
 
 
 ## Scheduling Jobs on Remote systems 
+
+BEGIN
+DBMS_SCHEDULER.CREATE_DATABASE_DESTINATION (
+destination_name => 'destdemo',
+agent => 'agentdemo',
+tns_name => 'pdborcl');
+END;
+/
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_CREDENTIAL (
+credential_name => 'credemo',
+username => 'userdemo',
+password => 'usercre',
+database_role => SYSTEM);
+END;
+/
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOBS (
+job_name => 'test',
+job_type => 'STORED_PROCEDURE',
+job_action => 'chaindemo',
+credential_name => 'credemo',
+destination_name => 'destdemo');
+END;
+/
+
+
+### Prioritizing jobs with Oracle Scheduler 
+
+SELECT table_name FROM dictionary
+WHERE table_name LIKE 'DBA%CONSUMER%';
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB_CLASS (
+job_class_name => 'jobdemo1',
+resource_consumer_group => 'ETL_GROUP');
+END;
+/
+
+
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+job_name => 'jobtest1',
+job_type => 'STORED_PROCEDURE',
+job_action => 'chaindemo');
+END;
+/
+
+
+BEGIN
+DBMS_SCHEDULER.SET_ATTRIBUTE (
+name => 'jobtest1',
+attribute => 'job_priority',
+value => 1);
+END;
+/
+
+
+SELECT owner, job_name, program_name, job_priority FROM dba_scheduler_jobs ORDER BY 4;
+
+
